@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Growth Assessment</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 
     <script src="https://cdn.jsdelivr.net/npm/ipaddr.js@2.0.1/lib/ipaddr.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -424,9 +425,9 @@
                 type: "image",
                 options: [
                     { img: "/images/empty-wallet.jpg", text: "I live paycheck-to-paycheck.", score: { level2: 2, level4: 1, level5: 1 } },
-                    { img: "/images/piggybank.jpg", text: "I save leftovers manually.", score: { level2: 1, level3: 2, level4: 2 } },
-                    { img: "/images/auto-invest.jpg", text: "10-20% automated savings.", score: { level2: 2, level3: 3, level4: 1 } },
-                    { img: "/images/saas-revenue.jpg", text: "Assets fund my lifestyle.", score: { level1: 3, level5: 2 } }
+                    { img: "/images/piggy-bank.jpg", text: "I save leftovers manually.", score: { level2: 1, level3: 2, level4: 2 } },
+                    { img: "/images/auto-invest.jpg", text: "10-20% automated savings.", score: { level3: 3, level4: 1 } },
+                    { img: "/images/passive-income.jpg", text: "Assets fund my lifestyle.", score: { level1: 3, level5: 2 } }
                 ]
             },
             {
@@ -478,10 +479,10 @@
                 title: "How do people find you online?",
                 type: "image",
                 options: [
-                    { img: "/images/ghost-profile.jpg", text: "They don't.", score: { level2: 2, level5: 2 } },
-                    { img: "/images/blog-post.jpg", text: "I post inconsistently.", score: { level3: 2, level4: 3, level5: 1 } },
-                    { img: "/images/youtube-channel.jpg", text: "Build an audience.", score: { level1: 3, level3: 1 } },
-                    { img: "/images/viral-tweet.jpg", text: "Lead a niche community.", score: { level4: 2, level5: 2 } }
+                    { img: "/images/no-online-presence.jpg", text: "They don't.", score: { level2: 2, level5: 2 } },
+                    { img: "/images/inconsistent-posting.jpg", text: "I post inconsistently.", score: { level3: 2, level4: 3, level5: 1 } },
+                    { img: "/images/audience-building.jpg", text: "Build an audience.", score: { level1: 3, level3: 1 } },
+                    { img: "/images/community-leader.jpg", text: "Lead a niche community.", score: { level4: 2, level5: 2 } }
                 ]
             },
             {
@@ -522,10 +523,10 @@
                 title: "How do you use AI tools?",
                 type: "image",
                 options: [
-                    { img: "/images/typewriter.jpg", text: "I don't – prefer old ways.", score: { level2: 2, level4: 2 } },
-                    { img: "/images/chatgpt.jpg", text: "For simple tasks.", score: { level3: 2, level5: 3 } },
-                    { img: "/images/automation.jpg", text: "Automate 30%+ of work.", score: { level1: 3, level4: 2 } },
-                    { img: "/images/ai-chip.jpg", text: "Setup AI agents for my niche.", score: { level3: 1, level4: 2, level5: 2 } }
+                    { img: "/images/traditional-methods.jpg", text: "I don't – prefer old ways.", score: { level2: 2, level4: 2 } },
+                    { img: "/images/basic-ai-use.jpg", text: "For simple tasks.", score: { level3: 2, level5: 3 } },
+                    { img: "/images/workflow-automation.jpg", text: "Automate 30%+ of work.", score: { level1: 3, level4: 2 } },
+                    { img: "/images/advanced-ai-systems.jpg", text: "Setup AI agents for my niche.", score: { level3: 1, level4: 2, level5: 2 } }
                 ]
             },
             {
@@ -554,11 +555,7 @@
 
         let currentQuestion = 0;
 let scores = {
-    level1: 0,
-    level2: 0,
-    level3: 0,
-    level4: 0,
-    level5: 0
+    level1: 0, level2: 0, level3: 0, level4: 0, level5: 0
 };
 
 let userIP = '';
@@ -712,21 +709,20 @@ function showResults() {
     let cardContent = `
         <h2 class="question-title">${resultContent.title}</h2>
         <p class="result-description">${resultContent.description}</p>
-        <img src="${resultContent.image}" alt="${resultContent.title}" class="result-image">
     `;
 
     if (resultType !== 'level1') {
         cardContent += `
             <div class="email-form">
-                <p>Ready to accelerate your growth? Get a personalized action plan based on your assessment!</p>
+                <p>If you need a help with the ${resultContent.title} level, you can get a personalized action plan based on your assessment!</p>
                 <input type="email" id="email" placeholder="Enter your email address" class="email-input">
-                <button onclick="submitResults()" class="submit-button">Get My Action Plan</button>
+                <button onclick="submitResults()" class="submit-button">I want to receive more information</button>
             </div>
         `;
     }
     
     card.innerHTML = cardContent;
-    
+   
     container.innerHTML = '';
     container.appendChild(card);
 
@@ -748,6 +744,8 @@ const resultContents = {
             <p>Big changes or risks feel daunting—stability takes precedence over long-term goals.</p>
             <p>Your network offers social support but lacks mentors or peers focused on growth, leaving you feeling isolated in your ambitions.</p>
             
+            <img src="/images/profile-crisis.jpg" alt="profile-crisis" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
+            
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Sustained financial pressure, making it harder to get ahead or handle unexpected setbacks.</p>
             <p>Skills may stagnate, leaving you vulnerable to shifts in the job market.</p>
@@ -764,7 +762,6 @@ const resultContents = {
             <h3>Encouragement:</h3>
             <p>"Awareness is your advantage. Small, consistent steps build agency—many successful people started right where you are."</p>
         `,
-        image: "/images/profile-crisis.jpg"
     },
     level2: {
         title: "The Ready Dreamer",
@@ -774,6 +771,8 @@ const resultContents = {
             <p>You have detailed plans but struggle to launch ("I need more research" or "It's not perfect yet").</p>
             <p>Efforts are inconsistent—bursts of activity followed by pauses—preventing traction.</p>
             <p>You default to "safe" paths (e.g., stable jobs) despite bigger ambitions.</p>
+            
+            <img src="/images/profile-ready.jpg" alt="profile-ready" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Regret as others act on similar ideas while yours remain unrealized.</p>
@@ -791,7 +790,6 @@ const resultContents = {
             <h3>Encouragement:</h3>
             <p>"Your ability to plan is a strength—now unleash it through action. Progress beats perfection."</p>
         `,
-        image: "/images/profile-ready.jpg"
     },
     level3: {
         title: "The Consistent Implementer",
@@ -802,6 +800,8 @@ const resultContents = {
             <p>You're seeing tangible results—first clients, initial sales, completed projects—but it requires significant personal effort and feels like a constant juggle.</p>
             <p>Your focus is primarily on doing the work and delivering; less time is spent on optimizing processes or long-term strategy.</p>
             <p>Learning happens rapidly through trial-and-error; you're gaining real-world experience but might lack clear systems.</p>
+            
+            <img src="/images/profile-consistent.jpg" alt="profile-consistent" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Efforts yield results, but income or impact scales directly (and often linearly) with the hours you put in.</p>
@@ -821,7 +821,6 @@ const resultContents = {
             <h3>Encouragement:</h3>
             <p>"You're making things happen—the proof is in the results! This consistent action builds undeniable momentum and real-world validation. Now, it's time to refine that effort for sustainable growth."</p>
         `,
-        image: "/images/profile-consistent.jpg"
     },
     level4: {
         title: "The Action-Taking Optimizer",
@@ -831,6 +830,8 @@ const resultContents = {
             <p>You have monetized skills or side hustles but lack systems to scale.</p>
             <p>Time is your bottleneck (trading hours for dollars).</p>
             <p>Growth feels fragile (e.g., client-dependent income).</p>
+            
+            <img src="/images/profile-action-taker.jpg" alt="profile-action-taker" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Income plateaus despite hard work.</p>
@@ -848,8 +849,7 @@ const resultContents = {
             <h3>Encouragement:</h3>
             <p>"You're creating real value! Now design systems to scale beyond your time."</p>
         `,
-        image: "/images/profile-action-taker.jpg"
-    },
+        },
     level5: {
         title: "The Entrepreneurial Scaler",
         description: `
@@ -858,6 +858,8 @@ const resultContents = {
             <p>Your assets/systems generate income with minimal direct effort.</p>
             <p>Your focus shifts to legacy, industry influence, or values-aligned growth.</p>
             <p>Few peers understand your challenges, leading to professional isolation.</p>
+            
+            <img src="/images/profile-entrepreneur.jpg" alt="profile-entrepreneur" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Complacency ("good enough") vs. continued innovation.</p>
@@ -875,7 +877,7 @@ const resultContents = {
             <h3>Encouragement:</h3>
             <p>"You've built something significant—now refine it, inspire others, and amplify your impact."</p>
         `,
-        image: "/images/profile-entrepreneur.jpg"
+        
     }
 };
 
@@ -887,12 +889,24 @@ async function sendFirstRequest() {
     const highestScore = Object.entries(scores).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
     const resultContent = getResultContent(highestScore);
     const formattedAnswers = selectedTexts.map(item => `${item.question}:${item.answer}`).join('\n');
+    
+    // Convert HTML to plain text by removing HTML tags
+    const plainTextDescription = resultContent.description
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
+        .replace(/\s+/g, ' ')    // Replace multiple spaces with single space
+        .trim();                  // Trim whitespace
+    
+    // Determine user level based on result type
+    const userLevel = (highestScore === 'level1' || highestScore === 'level2') ? 'beginner' : 'advanced';
+    
     const payload = {
         IP: userIP,
         COUNTRY: userCountry,
         RESULT: resultContent.title,
         ANSWERS: formattedAnswers,
-        FULLRESULT: resultContent.description
+        FULLRESULT: plainTextDescription,
+        USER_LEVEL: userLevel
     };
 
     try {
@@ -907,12 +921,14 @@ async function sendFirstRequest() {
         if (response.ok) {
             const data = await response.json();
             baserowRowId = data.id; // Store the Baserow row ID
+            console.log('Quiz results successfully submitted');
         } else {
-            throw new Error('Failed to submit results');
+            console.error('Server response not OK:', response.status);
+            // Don't throw error, just log it to console
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('There was an error submitting your results. Please try again.');
+        console.error('Error in sendFirstRequest:', error);
+        // Remove alert to avoid disrupting user experience
     }
 }
 
@@ -954,7 +970,7 @@ function showThankYou() {
     
     card.innerHTML = `
         <h2 class="question-title">Thank You!</h2>
-        <p class="result-description">We've received your information and will be in touch soon with your detailed results and personalized recommendations.</p>
+        <p class="result-description">We've received your request and will be in touch soon with personalized recommendations.</p>
     `;
     
     container.innerHTML = '';
@@ -966,23 +982,15 @@ function showThankYou() {
 }
 
 // Get user's IP and country
-$.getJSON('https://api.ipify.org?format=json', function(data) {
-    userIP = data.ip; // Update the global userIP variable
+$.getJSON('/api/get-ip-info', function(data) {
+    userIP = data.ip;
+    userCountry = data.country;
     console.log('User IP:', userIP);
-    
-    const apiKey = "5ec1c6cb26f8c4c82ae10124f2896827"; // Use your actual API key here
-    const url = `https://api.ipstack.com/${userIP}?access_key=${apiKey}`;
-
-    $.ajax({
-        url: url,
-        method: "GET",
-        dataType: "json"
-    }).done(function(response) {
-        userCountry = response.country_name; // Update the global userCountry variable
-        $('#country-info').text('Country: ' + userCountry);
-    }).fail(function() {
-        $('#country-info').text('Failed to fetch the data');
-    });
+    console.log('User Country:', userCountry);
+}).fail(function(error) {
+    console.error('Failed to fetch IP information:', error);
+    userIP = 'unknown';
+    userCountry = 'unknown';
 });
 // Start the quiz with the intro page
 renderIntroPage();
