@@ -122,21 +122,86 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// API endpoint to get IP and country information
+app.get('/api/get-ip-info', async (req, res) => {
+    try {
+        // Get client IP (considering potential proxies)
+        const clientIp = req.headers['x-forwarded-for'] || 
+                         req.connection.remoteAddress || 
+                         req.socket.remoteAddress ||
+                         req.headers['x-real-ip'] || // Vercel-specific header
+                         '0.0.0.0';
+                         
+        // Clean the IP address
+        let ip = clientIp;
+        if (ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+        if (ip.includes('::ffff:')) {
+            ip = ip.replace('::ffff:', '');
+        }
+        
+        // For Vercel, sometimes we get internal IPs that aren't useful
+        if (ip === '127.0.0.1' || ip === 'localhost' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+            ip = 'unknown';
+        }
+        
+        // Get country information using ipstack API
+        if (CONFIG.IPSTACK.API_KEY) {
+            try {
+                const response = await axios.get(
+                    `https://api.ipstack.com/${ip}?access_key=${CONFIG.IPSTACK.API_KEY}`
+                );
+                
+                return res.json({
+                    ip: ip,
+                    country: response.data.country_name || 'Unknown'
+                });
+            } catch (error) {
+                console.error('Error fetching country data:', error);
+                return res.json({ ip: ip, country: 'Unknown' });
+            }
+        } else {
+            // If no API key is available
+            return res.json({ ip: ip, country: 'Unknown' });
+        }
+    } catch (error) {
+        console.error('IP detection error:', error);
+        res.status(200).json({ error: 'Failed to detect IP', ip: 'unknown', country: 'unknown' });
+    }
+});
+
 // Submit quiz results
 app.post('/api/submit-quiz', async (req, res) => {
-    const { IP, COUNTRY, RESULT, ANSWERS, FULLRESULT } = req.body;
-    try {
-        const response = await DatabaseService.submitQuiz({
-            IP,
-            COUNTRY,
-            RESULT,
-            ANSWERS,
-            FULLRESULT
+    const { IP, COUNTRY, RESULT, ANSWERS, FULLRESULT, USER_LEVEL } = req.body;
+    
+    // Validate required fields
+    if (!RESULT) {
+        return res.status(200).json({ 
+            error: 'Missing required fields',
+            id: 'temp-id'
         });
+    }
+    
+    try {
+        const data = {
+            IP: IP || 'unknown',
+            COUNTRY: COUNTRY || 'unknown',
+            RESULT: RESULT,
+            ANSWERS: ANSWERS || '',
+            FULLRESULT: FULLRESULT || '',
+            USER_LEVEL: USER_LEVEL || 'unknown'
+        };
+        
+        const response = await DatabaseService.submitQuiz(data);
         res.json(response.data);
     } catch (error) {
         console.error('Error submitting quiz result:', error);
-        res.status(500).json({ error: 'Failed to submit quiz result' });
+        // Return a 200 with error info instead of 500 to prevent client-side errors
+        res.status(200).json({ 
+            error: 'Failed to submit quiz result',
+            id: 'temp-id'
+        });
     }
 });
 
@@ -144,12 +209,25 @@ app.post('/api/submit-quiz', async (req, res) => {
 app.put('/api/update-quiz/:id', async (req, res) => {
     const { id } = req.params;
     const { EMAIL } = req.body;
+    
+    // Handle invalid ID
+    if (!id || id === 'null' || id === 'undefined' || id === 'temp-id') {
+        return res.status(200).json({ 
+            message: 'Skipped update due to invalid ID',
+            success: false
+        });
+    }
+    
     try {
         const response = await DatabaseService.updateQuiz(id, { EMAIL });
         res.json(response.data);
     } catch (error) {
         console.error('Error updating quiz result:', error);
-        res.status(500).json({ error: 'Failed to update quiz result' });
+        // Return a 200 with error info instead of 500
+        res.status(200).json({ 
+            error: 'Failed to update quiz result',
+            success: false
+        });
     }
 });
 
