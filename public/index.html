@@ -855,7 +855,7 @@ const resultContents = {
             <p>Efforts are inconsistent—bursts of activity followed by pauses—preventing traction.</p>
             <p>You default to "safe" paths (e.g., stable jobs) despite bigger ambitions.</p>
             
-            <img src="/images/profile-ready.jpg" alt="profile-ready" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
+            <img src="images/profile-ready.jpg" alt="profile-ready" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Regret as others act on similar ideas while yours remain unrealized.</p>
@@ -884,7 +884,7 @@ const resultContents = {
             <p>Your focus is primarily on doing the work and delivering; less time is spent on optimizing processes or long-term strategy.</p>
             <p>Learning happens rapidly through trial-and-error; you're gaining real-world experience but might lack clear systems.</p>
             
-            <img src="/images/profile-consistent.jpg" alt="profile-consistent" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
+            <img src="images/profile-consistent.jpg" alt="profile-consistent" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Efforts yield results, but income or impact scales directly (and often linearly) with the hours you put in.</p>
@@ -914,7 +914,7 @@ const resultContents = {
             <p>Time is your bottleneck (trading hours for dollars).</p>
             <p>Growth feels fragile (e.g., client-dependent income).</p>
             
-            <img src="/images/profile-action-taker.jpg" alt="profile-action-taker" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
+            <img src="images/profile-action-taker.jpg" alt="profile-action-taker" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Income plateaus despite hard work.</p>
@@ -942,7 +942,7 @@ const resultContents = {
             <p>Your focus shifts to legacy, industry influence, or values-aligned growth.</p>
             <p>Few peers understand your challenges, leading to professional isolation.</p>
             
-            <img src="/images/profile-entrepreneur.jpg" alt="profile-entrepreneur" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
+            <img src="images/profile-entrepreneur.jpg" alt="profile-entrepreneur" style="max-width: 100%; height: auto; margin: 20px 0; border-radius: 10px;">
             
             <h3>Trajectory If Things Stay the Same:</h3>
             <p>Complacency ("good enough") vs. continued innovation.</p>
@@ -984,8 +984,8 @@ async function sendFirstRequest() {
     const userLevel = (highestScore === 'level1' || highestScore === 'level2') ? 'beginner' : 'advanced';
     
     const payload = {
-        IP: userIP,
-        COUNTRY: userCountry,
+        IP: userIP || 'unknown',
+        COUNTRY: userCountry || 'unknown',
         RESULT: resultContent.title,
         ANSWERS: formattedAnswers,
         FULLRESULT: plainTextDescription,
@@ -1003,7 +1003,7 @@ async function sendFirstRequest() {
 
         if (response.ok) {
             const data = await response.json();
-            baserowRowId = data.id; // Store the Baserow row ID
+            baserowRowId = data.id || 'temp-id'; // Store the Baserow row ID with fallback
             console.log('Quiz results successfully submitted');
             
             // Mark quiz as completed in localStorage
@@ -1011,11 +1011,13 @@ async function sendFirstRequest() {
             localStorage.setItem('quizCompletedDate', new Date().toISOString());
         } else {
             console.error('Server response not OK:', response.status);
-            // Don't throw error, just log it to console
+            // Set a temporary ID to avoid null errors
+            baserowRowId = 'temp-id';
         }
     } catch (error) {
         console.error('Error in sendFirstRequest:', error);
-        // Remove alert to avoid disrupting user experience
+        // Set a temporary ID to avoid null errors
+        baserowRowId = 'temp-id';
     }
 }
 
@@ -1023,6 +1025,14 @@ async function submitResults() {
     const email = document.getElementById('email').value;
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email address');
+        return;
+    }
+
+    // Check if we have a valid baserowRowId
+    if (!baserowRowId || baserowRowId === 'temp-id') {
+        // If no valid ID, just show thank you page without API call
+        showThankYou();
+        console.log('Skipping email update due to missing row ID');
         return;
     }
 
@@ -1042,11 +1052,13 @@ async function submitResults() {
         if (response.ok) {
             showThankYou();
         } else {
-            throw new Error('Failed to update email');
+            console.error('Failed to update email, but continuing to thank you page');
+            showThankYou(); // Still show thank you page even if update fails
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('There was an error updating your email. Please try again.');
+        // Still show thank you page instead of error alert
+        showThankYou();
     }
 }
 
@@ -1098,10 +1110,10 @@ $.getJSON('/api/get-ip-info', function(data) {
     console.log('User Country:', userCountry);
 }).fail(function(error) {
     console.error('Failed to fetch IP information:', error);
+    // Set fallback values if IP detection fails
     userIP = 'unknown';
     userCountry = 'unknown';
 });
-
 function startQuiz() {
     renderQuestion(questions[0]);
 }
