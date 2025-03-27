@@ -219,6 +219,39 @@
             transform: translateY(-2px);
         }
 
+        .start-button {
+            background: var(--golden-gradient);
+            color: #1a1b26;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 15px;
+            transition: transform 0.2s;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+            font-weight: bold;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .intro-text {
+            margin: 20px 0;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .intro-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
     
 
 
@@ -564,6 +597,12 @@ let selectedTexts = [];
 let baserowRowId = null; // To store the Baserow row ID
 
 function renderIntroPage() {
+    // Check if user has already taken the quiz
+    if (localStorage.getItem('quizCompleted')) {
+        showAlreadyCompletedMessage();
+        return;
+    }
+    
     const container = document.getElementById('questionContainer');
     container.innerHTML = '';
 
@@ -583,14 +622,34 @@ function renderIntroPage() {
 
     const startButton = document.createElement('button');
     startButton.className = 'submit-button';
-    startButton.textContent = "Begin Assessment";
-    startButton.onclick = () => renderQuestion(questions[0]);
+    startButton.textContent = "Start Quiz";
+    startButton.onclick = startQuiz; // Use the startQuiz function
     card.appendChild(startButton);
 
     card.style.textAlign = 'center'; // Center the content in the card
     container.appendChild(card);
 }
 
+// Function to show message when user has already completed the quiz
+function showAlreadyCompletedMessage() {
+    const container = document.getElementById('questionContainer');
+    const card = document.createElement('div');
+    card.className = 'question-card result-card active';
+    
+    card.innerHTML = `
+        <h2 class="question-title">You've Already Completed This Assessment</h2>
+        <p class="result-description">Our records show you've already taken this assessment.</p>
+        <p class="result-description"> Each person can only take the assessment once to ensure accurate results.</p>
+        <p class="result-description">Thank you for your participation.</p>
+        `;
+    
+    container.innerHTML = '';
+    container.appendChild(card);
+    
+    // Update progress bar to 100%
+    const progress = document.getElementById('progress');
+    progress.style.width = '100%';
+}
 
 function renderQuestion(question) {
     const container = document.getElementById('questionContainer');
@@ -714,7 +773,7 @@ function showResults() {
     if (resultType !== 'level1') {
         cardContent += `
             <div class="email-form">
-                <p>If you need a help with the ${resultContent.title} level, you can get a personalized action plan based on your assessment!</p>
+                <p>If you need help with the ${resultContent.title} level, you can get a personalized action plan based on your assessment!</p>
                 <input type="email" id="email" placeholder="Enter your email address" class="email-input">
                 <button onclick="submitResults()" class="submit-button">I want to receive more information</button>
             </div>
@@ -729,6 +788,30 @@ function showResults() {
     // Update progress bar to 90%
     const progress = document.getElementById('progress');
     progress.style.width = '90%';
+    
+    // Trigger celebratory confetti animation for profile reveal
+    confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+    });
+    
+    // Add more confetti after a small delay for a better effect
+    setTimeout(() => {
+        confetti({
+            particleCount: 70,
+            angle: 60,
+            spread: 60,
+            origin: { x: 0 }
+        });
+        
+        confetti({
+            particleCount: 70,
+            angle: 120,
+            spread: 60,
+            origin: { x: 1 }
+        });
+    }, 500);
 
     // Send first request to Baserow
     sendFirstRequest();
@@ -922,6 +1005,10 @@ async function sendFirstRequest() {
             const data = await response.json();
             baserowRowId = data.id; // Store the Baserow row ID
             console.log('Quiz results successfully submitted');
+            
+            // Mark quiz as completed in localStorage
+            localStorage.setItem('quizCompleted', 'true');
+            localStorage.setItem('quizCompletedDate', new Date().toISOString());
         } else {
             console.error('Server response not OK:', response.status);
             // Don't throw error, just log it to console
@@ -980,29 +1067,27 @@ function showThankYou() {
     const progress = document.getElementById('progress');
     progress.style.width = '100%';
     
-    // Trigger confetti animation
+    // Trigger subtle, slower confetti for thank you page
     confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
+        particleCount: 30,
+        spread: 50,
+        origin: { y: 0.5 },
+        gravity: 0.5,  // Lower gravity makes confetti fall slower
+        scalar: 0.8,   // Smaller confetti particles
+        ticks: 300     // Longer animation duration
     });
     
-    // Add more confetti after a small delay for a better effect
+    // Add a few more gentle confetti pieces after a delay
     setTimeout(() => {
         confetti({
-            particleCount: 50,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 }
+            particleCount: 15,
+            spread: 40,
+            origin: { y: 0.4 },
+            gravity: 0.4,
+            scalar: 0.7,
+            ticks: 250
         });
-        
-        confetti({
-            particleCount: 50,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 }
-        });
-    }, 750);
+    }, 1000);
 }
 
 // Get user's IP and country
@@ -1016,6 +1101,11 @@ $.getJSON('/api/get-ip-info', function(data) {
     userIP = 'unknown';
     userCountry = 'unknown';
 });
+
+function startQuiz() {
+    renderQuestion(questions[0]);
+}
+
 // Start the quiz with the intro page
 renderIntroPage();
     </script>
