@@ -979,6 +979,30 @@ function showThankYou() {
     // Update progress bar to 100%
     const progress = document.getElementById('progress');
     progress.style.width = '100%';
+    
+    // Trigger confetti animation
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
+    
+    // Add more confetti after a small delay for a better effect
+    setTimeout(() => {
+        confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 }
+        });
+        
+        confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 }
+        });
+    }, 750);
 }
 
 // Get user's IP and country
