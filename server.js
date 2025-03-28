@@ -22,6 +22,7 @@ const CONFIG = {
             BASE_URL: process.env.BASEROW_BASE_URL || 'https://api.baserow.io/api/database/rows/table'
         },
         AIRTABLE: {
+            // Fix for Vercel: Ensure API key is properly retrieved
             API_KEY: process.env.AIRTABLE_API_KEY,
             BASE_ID: process.env.AIRTABLE_BASE_ID,
             TABLE_NAME: process.env.AIRTABLE_TABLE_NAME
@@ -29,33 +30,23 @@ const CONFIG = {
     },
     IPSTACK: {
         API_KEY: process.env.IPSTACK_API_KEY
-    }
+    },
+    // Environment detection
+    IS_VERCEL: process.env.VERCEL === '1' || process.env.VERCEL === 'true'
 };
+
+// Log configuration on startup (without sensitive data)
+console.log('Starting server with configuration:');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Vercel environment detected:', CONFIG.IS_VERCEL ? 'Yes' : 'No');
+console.log('DB TYPE:', CONFIG.DB.TYPE);
+console.log('AIRTABLE BASE ID:', CONFIG.DB.AIRTABLE.BASE_ID);
+console.log('AIRTABLE TABLE:', CONFIG.DB.AIRTABLE.TABLE_NAME);
+console.log('AIRTABLE API KEY:', CONFIG.DB.AIRTABLE.API_KEY ? 'Set (hidden)' : 'Not set');
 
 // ============ Database Interface ============
 const DatabaseService = {
     async submitQuiz(data) {
-        // Check for Vercel environment
-        const isVercel = process.env.VERCEL === '1';
-        
-        // Check if we have valid API credentials
-        const hasValidAirtableConfig = CONFIG.DB.AIRTABLE.API_KEY && 
-                                      CONFIG.DB.AIRTABLE.BASE_ID && 
-                                      CONFIG.DB.AIRTABLE.TABLE_NAME;
-        
-        // If on Vercel and having auth issues, use local storage approach
-        if (isVercel || !hasValidAirtableConfig) {
-            console.log('Using local storage approach for quiz data');
-            // Generate a unique ID for tracking
-            const uniqueId = 'local-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-            return {
-                data: {
-                    ...data,
-                    id: uniqueId
-                }
-            };
-        }
-        
         if (CONFIG.DB.TYPE === 'BASEROW') {
             return axios({
                 method: "POST",
@@ -68,11 +59,16 @@ const DatabaseService = {
             });
         } else if (CONFIG.DB.TYPE === 'AIRTABLE') {
             try {
+                // Direct access to environment variables for Vercel compatibility
+                const apiKey = process.env.AIRTABLE_API_KEY;
+                const baseId = process.env.AIRTABLE_BASE_ID;
+                const tableName = process.env.AIRTABLE_TABLE_NAME;
+                
                 const response = await axios({
                     method: "POST",
-                    url: `https://api.airtable.com/v0/${CONFIG.DB.AIRTABLE.BASE_ID}/${CONFIG.DB.AIRTABLE.TABLE_NAME}`,
+                    url: `https://api.airtable.com/v0/${baseId}/${tableName}`,
                     headers: {
-                        Authorization: `Bearer ${CONFIG.DB.AIRTABLE.API_KEY}`,
+                        "Authorization": `Bearer ${apiKey}`,
                         "Content-Type": "application/json"
                     },
                     data: {
@@ -81,6 +77,7 @@ const DatabaseService = {
                         }]
                     }
                 });
+                
                 // Transform Airtable response to match Baserow format
                 return {
                     data: {
@@ -90,39 +87,12 @@ const DatabaseService = {
                 };
             } catch (error) {
                 console.error('Airtable API error:', error.message);
-                // Fallback to local storage approach
-                const uniqueId = 'local-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-                return {
-                    data: {
-                        ...data,
-                        id: uniqueId
-                    }
-                };
+                throw error; // Re-throw to properly handle in the API endpoint
             }
         }
     },
 
     async updateQuiz(id, data) {
-        // Skip database update for local IDs
-        if (id.startsWith('local-')) {
-            console.log('Skipping database update for local ID:', id);
-            return { data: { success: true } };
-        }
-        
-        // Check for Vercel environment
-        const isVercel = process.env.VERCEL === '1';
-        
-        // Check if we have valid API credentials
-        const hasValidAirtableConfig = CONFIG.DB.AIRTABLE.API_KEY && 
-                                      CONFIG.DB.AIRTABLE.BASE_ID && 
-                                      CONFIG.DB.AIRTABLE.TABLE_NAME;
-        
-        // If on Vercel and having auth issues, use local storage approach
-        if (isVercel || !hasValidAirtableConfig) {
-            console.log('Using local storage approach for email update');
-            return { data: { success: true } };
-        }
-        
         if (CONFIG.DB.TYPE === 'BASEROW') {
             return axios({
                 method: "PATCH",
@@ -135,12 +105,16 @@ const DatabaseService = {
             });
         } else if (CONFIG.DB.TYPE === 'AIRTABLE') {
             try {
-                // For Airtable, we need to use the record ID format
+                // Direct access to environment variables for Vercel compatibility
+                const apiKey = process.env.AIRTABLE_API_KEY;
+                const baseId = process.env.AIRTABLE_BASE_ID;
+                const tableName = process.env.AIRTABLE_TABLE_NAME;
+                
                 const response = await axios({
                     method: "PATCH",
-                    url: `https://api.airtable.com/v0/${CONFIG.DB.AIRTABLE.BASE_ID}/${CONFIG.DB.AIRTABLE.TABLE_NAME}`,
+                    url: `https://api.airtable.com/v0/${baseId}/${tableName}`,
                     headers: {
-                        Authorization: `Bearer ${CONFIG.DB.AIRTABLE.API_KEY}`,
+                        "Authorization": `Bearer ${apiKey}`,
                         "Content-Type": "application/json"
                     },
                     data: {
@@ -150,6 +124,7 @@ const DatabaseService = {
                         }]
                     }
                 });
+                
                 return {
                     data: {
                         success: true,
@@ -158,8 +133,7 @@ const DatabaseService = {
                 };
             } catch (error) {
                 console.error('Airtable API error during update:', error.message);
-                // Return success anyway to not disrupt user experience
-                return { data: { success: true } };
+                throw error; // Re-throw to properly handle in the API endpoint
             }
         }
     }
@@ -220,10 +194,25 @@ app.post('/api/submit-quiz', async (req, res) => {
             USER_LEVEL: USER_LEVEL || 'unknown'
         };
         
+        // Direct access to environment variables for Vercel compatibility
+        const apiKey = process.env.AIRTABLE_API_KEY;
+        const baseId = process.env.AIRTABLE_BASE_ID;
+        const tableName = process.env.AIRTABLE_TABLE_NAME;
+        
+        // Log the Airtable config for debugging
+        console.log('Airtable config for submit:', {
+            apiKeyExists: !!apiKey,
+            baseId,
+            tableName
+        });
+        
         const response = await DatabaseService.submitQuiz(data);
         res.json(response.data);
     } catch (error) {
-        console.error('Error submitting quiz result:', error);
+        console.error('Error submitting quiz result:', error.message);
+        if (error.response) {
+            console.error('API response error:', error.response.status, error.response.data);
+        }
         // Return a simple response with temp ID to prevent client errors
         res.json({ id: 'temp-id' });
     }
@@ -240,10 +229,26 @@ app.put('/api/update-quiz/:id', async (req, res) => {
     }
     
     try {
+        // Direct access to environment variables for Vercel compatibility
+        const apiKey = process.env.AIRTABLE_API_KEY;
+        const baseId = process.env.AIRTABLE_BASE_ID;
+        const tableName = process.env.AIRTABLE_TABLE_NAME;
+        
+        // Log the Airtable config for debugging
+        console.log('Airtable config for update:', {
+            apiKeyExists: !!apiKey,
+            baseId,
+            tableName,
+            id: id
+        });
+        
         const response = await DatabaseService.updateQuiz(id, { EMAIL });
         res.json(response.data);
     } catch (error) {
-        console.error('Error updating quiz result:', error);
+        console.error('Error updating quiz result:', error.message);
+        if (error.response) {
+            console.error('API response error:', error.response.status, error.response.data);
+        }
         res.json({ success: false });
     }
 });
@@ -263,17 +268,32 @@ app.get('/api/ip-info', async (req, res) => {
 // Test endpoint to check Airtable structure
 app.get('/api/test-airtable', async (req, res) => {
     try {
+        // Direct access to environment variables for Vercel compatibility
+        const apiKey = process.env.AIRTABLE_API_KEY;
+        const baseId = process.env.AIRTABLE_BASE_ID;
+        const tableName = process.env.AIRTABLE_TABLE_NAME;
+        
+        // Log the Airtable config for debugging
+        console.log('Airtable config for test:', {
+            apiKeyExists: !!apiKey,
+            baseId,
+            tableName
+        });
+        
         const response = await axios({
             method: 'GET',
-            url: `https://api.airtable.com/v0/${CONFIG.DB.AIRTABLE.BASE_ID}/${CONFIG.DB.AIRTABLE.TABLE_NAME}`,
+            url: `https://api.airtable.com/v0/${baseId}/${tableName}`,
             headers: {
-                Authorization: `Bearer ${CONFIG.DB.AIRTABLE.API_KEY}`,
+                "Authorization": `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             }
         });
         res.json(response.data);
     } catch (error) {
-        console.error('Airtable test error:', error.response?.data || error);
+        console.error('Airtable test error:', error.message);
+        if (error.response) {
+            console.error('API response error:', error.response.status, error.response.data);
+        }
         res.status(500).json({ error: error.response?.data || error.message });
     }
 });
