@@ -172,11 +172,38 @@ app.get('/api/get-ip-info', async (req, res) => {
             ip = ip.replace('::ffff:', '');
         }
         
-        // Return IP info directly without external API call for Vercel
-        return res.json({ ip: ip, country: 'Unknown' });
+        // Use IPStack API to get country information
+        if (CONFIG.IPSTACK.API_KEY) {
+            try {
+                const ipstackResponse = await axios({
+                    method: 'GET',
+                    url: `https://api.ipstack.com/${ip}?access_key=${CONFIG.IPSTACK.API_KEY}`,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 3000 // 3 second timeout to prevent long waits
+                });
+                
+                if (ipstackResponse.data && ipstackResponse.data.country_name) {
+                    return res.json({ 
+                        ip: ip, 
+                        country: ipstackResponse.data.country_name 
+                    });
+                } else {
+                    console.log('IPStack API returned invalid data');
+                    return res.json({ ip: ip, country: 'Unknown' });
+                }
+            } catch (ipError) {
+                console.error('IPStack API error:', ipError.message);
+                return res.json({ ip: ip, country: 'Unknown' });
+            }
+        } else {
+            console.log('IPStack API key not configured');
+            return res.json({ ip: ip, country: 'Unknown' });
+        }
     } catch (error) {
         console.error('IP detection error:', error);
-        res.json({ ip: 'unknown', country: 'unknown' });
+        res.json({ ip: 'unknown', country: 'Unknown' });
     }
 });
 
