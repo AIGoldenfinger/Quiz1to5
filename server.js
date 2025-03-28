@@ -172,44 +172,11 @@ app.get('/api/get-ip-info', async (req, res) => {
             ip = ip.replace('::ffff:', '');
         }
         
-        // Skip external API call if running on Vercel to avoid 500 errors
-        if (CONFIG.IS_VERCEL) {
-            console.log('Running on Vercel, skipping IPStack API call');
-            return res.json({ ip: ip, country: 'Unknown' });
-        }
-        
-        // Use IPStack API to get country information
-        if (CONFIG.IPSTACK.API_KEY) {
-            try {
-                const ipstackResponse = await axios({
-                    method: 'GET',
-                    url: `http://api.ipstack.com/${ip}?access_key=${CONFIG.IPSTACK.API_KEY}`,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 3000 // 3 second timeout to prevent long waits
-                });
-                
-                if (ipstackResponse.data && ipstackResponse.data.country_name) {
-                    return res.json({ 
-                        ip: ip, 
-                        country: ipstackResponse.data.country_name 
-                    });
-                } else {
-                    console.log('IPStack API returned invalid data:', ipstackResponse.data);
-                    return res.json({ ip: ip, country: 'Unknown' });
-                }
-            } catch (ipError) {
-                console.error('IPStack API error:', ipError.message);
-                return res.json({ ip: ip, country: 'Unknown' });
-            }
-        } else {
-            console.log('IPStack API key not configured');
-            return res.json({ ip: ip, country: 'Unknown' });
-        }
+        // Return IP info directly without external API call for Vercel
+        return res.json({ ip: ip, country: 'Unknown' });
     } catch (error) {
         console.error('IP detection error:', error);
-        res.json({ ip: 'unknown', country: 'Unknown' });
+        res.json({ ip: 'unknown', country: 'unknown' });
     }
 });
 
