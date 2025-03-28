@@ -770,15 +770,18 @@ function showResults() {
         <p class="result-description">${resultContent.description}</p>
     `;
 
-    if (resultType !== 'level1') {
-        cardContent += `
-            <div class="email-form">
-                <p>If you need help with the ${resultContent.title} level, you can get a personalized action plan based on your assessment!</p>
-                <input type="email" id="email" placeholder="Enter your email address" class="email-input">
-                <button onclick="submitResults()" class="submit-button">I want to receive more information</button>
-            </div>
-        `;
-    }
+    // Detect iOS devices (both Chrome and Safari)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isChrome = /CriOS/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    
+    cardContent += `
+        <div class="email-form" style="${(isIOS && (isChrome || isSafari)) ? 'display:block !important;' : ''}">
+            <p>If you need help with the ${resultContent.title} level, you can get a personalized action plan based on your assessment!</p>
+            <input type="email" id="email" placeholder="Enter your email address" class="email-input">
+            <button onclick="submitResults()" class="submit-button">I want to receive more information</button>
+        </div>
+    `;
     
     card.innerHTML = cardContent;
    
